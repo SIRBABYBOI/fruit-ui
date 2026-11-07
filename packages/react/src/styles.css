@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@source "../../../apps/playground/src";
+@source "./";
+
+@theme {
+  --color-fruit-bg: var(--fruit-bg);
+  --color-fruit-panel: var(--fruit-panel);
+  --color-fruit-border: var(--fruit-border);
+  --color-fruit-text: var(--fruit-text);
+  --color-fruit-muted: var(--fruit-muted);
+  --color-fruit-accent: var(--fruit-accent);
+}
+
+:root {
+  color-scheme: dark;
+
+  --fruit-bg: #111114;
+  --fruit-panel: #18181c;
+  --fruit-border: #29292f;
+  --fruit-text: #e8e8ed;
+  --fruit-muted: #858590;
+  --fruit-accent: #b7e36b;
+
+  --fruit-activity-width: 48px;
+  --fruit-status-height: 26px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--fruit-bg);
+  color: var(--fruit-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.fruitui {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--fruit-bg);
+  color: var(--fruit-text);
+}

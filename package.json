@@ -1,0 +1,21 @@
+{
+  "name": "fruitui",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --cwd app/playground dev",
+    "build": "bun run --cwd apps/playground build",
+    "typecheck": "bun run --cwd apps/playground tsc --noEmit"
+  }
+}
