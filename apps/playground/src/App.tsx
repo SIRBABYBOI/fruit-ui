@@ -1,122 +1,180 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { Files, Search, GitBranch, Settings, FileCode2 } from "lucide-react";
 
-function App() {
-  const [count, setCount] = useState(0)
+import { Group, Panel, Separator } from "react-resizable-panels";
+
+import {
+  Workspace,
+  ActivityBar,
+  Sidebar,
+  EditorArea,
+  StatusBar,
+} from "@fruitui/react";
+
+import type { EditorTab } from "@fruitui/core";
+
+const initialTabs: EditorTab[] = [
+  {
+    id: "main",
+    title: "main.zig",
+    path: "src/main.zig",
+  },
+  {
+    id: "build",
+    title: "build.zig",
+    path: "build.zig",
+  },
+];
+
+const activities = [
+  {
+    id: "explorer",
+    label: "Explorer",
+    icon: <Files size={20} />,
+  },
+  {
+    id: "search",
+    label: "Search",
+    icon: <Search size={20} />,
+  },
+  {
+    id: "source-control",
+    label: "Source Control",
+    icon: <GitBranch size={20} />,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: <Settings size={20} />,
+  },
+];
+
+export default function App() {
+  const [activity, setActivity] = useState("explorer");
+
+  const [tabs, setTabs] = useState<EditorTab[]>(initialTabs);
+
+  const [activeTabId, setActiveTabId] = useState<string | null>("main");
+
+  function closeTab(id: string) {
+    const remaining = tabs.filter((tab) => tab.id !== id);
+
+    setTabs(remaining);
+
+    if (activeTabId === id) {
+      setActiveTabId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Workspace>
+      <div className="flex min-h-0 flex-1">
+        <ActivityBar
+          items={activities}
+          activeId={activity}
+          onActiveChange={setActivity}
+        />
 
-      <div className="ticks"></div>
+        <div className="min-w-0 flex-1">
+          <Group orientation="horizontal">
+            <Panel defaultSize="23%" minSize="12%" maxSize="45%">
+              <Sidebar title={activity}>
+                {activity === "explorer" && (
+                  <div className="p-3 text-xs">
+                    <div className="mb-3 font-semibold">PASSIONFRUIT</div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                    {["main.zig", "build.zig"].map((file) => (
+                      <button
+                        key={file}
+                        type="button"
+                        className="flex w-full items-center
+                                     gap-2 rounded px-2 py-1.5
+                                     text-left hover:bg-white/5"
+                        onClick={() => {
+                          const id = file === "main.zig" ? "main" : "build";
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                          if (!tabs.some((tab) => tab.id === id)) {
+                            setTabs((previous) => [
+                              ...previous,
+                              {
+                                id,
+                                title: file,
+                              },
+                            ]);
+                          }
+
+                          setActiveTabId(id);
+                        }}
+                      >
+                        <FileCode2 size={14} />
+                        {file}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </Sidebar>
+            </Panel>
+
+            <Separator
+              className="w-1 cursor-col-resize
+                         bg-fruit-border
+                         hover:bg-fruit-accent"
+            />
+
+            <Panel minSize="30%">
+              <EditorArea
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onActiveTabChange={setActiveTabId}
+                onTabClose={closeTab}
+              >
+                {activeTabId ? (
+                  <div className="p-6 font-mono text-sm">
+                    <span className="text-fruit-muted">
+                      // {tabs.find((tab) => tab.id === activeTabId)?.title}
+                    </span>
+
+                    <pre className="mt-4 text-fruit-text">
+                      {`const std = @import("std");
+
+pub fn main() void {
+    std.debug.print(
+        "Hello from FruitUI!\\n",
+        .{},
+    );
+}`}
+                    </pre>
+                  </div>
+                ) : (
+                  <div
+                    className="flex h-full items-center
+                               justify-center text-sm
+                               text-fruit-muted"
+                  >
+                    No editor open
+                  </div>
+                )}
+              </EditorArea>
+            </Panel>
+          </Group>
+        </div>
+      </div>
+
+      <StatusBar
+        left={
+          <>
+            <GitBranch size={12} />
+            <span>main</span>
+          </>
+        }
+        right={
+          <>
+            <span>Zig</span>
+            <span>UTF-8</span>
+            <span>FruitUI v0.1.0</span>
+          </>
+        }
+      />
+    </Workspace>
+  );
 }
-
-export default App

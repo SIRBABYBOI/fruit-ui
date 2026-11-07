@@ -20,5 +20,9 @@
     "lucide-react": "^0.468.0",
     "react-resizable-panels": "^4.19.1",
     "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
   }
 }
