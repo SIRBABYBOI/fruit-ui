@@ -20,7 +20,7 @@ export function ActivityBar({
   return (
     <nav
       aria-label="Workspace activities"
-      className="flex w-12 shirnk-0 flex-col items-center gap-1 border-r border-fruit-border bg-fruit-panel py-2"
+      className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-fruit-border bg-fruit-panel py-2"
     >
       {items.map((item) => (
         <button

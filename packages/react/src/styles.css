@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
-@source "../../../apps/playground/src";
-@source "./";
+@source "./components";
 
 @theme {
   --color-fruit-bg: var(--fruit-bg);

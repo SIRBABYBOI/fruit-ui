@@ -7,17 +7,17 @@
     "dist"
   ],
   "sideEffects": [
-    "./src/styles.css"
+    "./dist/styles.css"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean --external react --external react-dom --external @fruitui/core"
+    "build": "tsup src/index.ts --format esm --dts --clean --external react --external react-dom --external @fruitui/core && tailwindcss -i src/styles.css -o dist/styles.css --minify"
   },
   "peerDependencies": {
     "react": "^19.0.0",
