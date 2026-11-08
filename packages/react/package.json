@@ -2,12 +2,22 @@
   "name": "@fruitui/react",
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "sideEffects": [
     "./src/styles.css"
   ],
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --external react --external react-dom --external @fruitui/core"
   },
   "peerDependencies": {
     "react": "^19.0.0",

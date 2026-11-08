@@ -2,8 +2,21 @@
   "name": "@fruitui/zig-bridge",
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": "./src/index.ts",
-    "./webview": "./src/webview.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./webview": {
+      "types": "./dist/webview.d.ts",
+      "import": "./dist/webview.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/webview.ts --format esm --dts --clean"
   }
 }
