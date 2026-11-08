@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@tailwindcss/cli": "^4.3.5",
     "@types/bun": "latest",
     "@types/react": "^19.3.0",
@@ -21,6 +22,7 @@
     "dev": "bun run --cwd apps/playground dev",
     "build": "bun run --cwd apps/playground build",
     "build:packages": "bun run --cwd packages/core build && bun run --cwd packages/react build && bun run --cwd packages/zig-bridge build",
-    "typecheck": "bun run --cwd apps/playground tsc --noEmit"
+    "typecheck": "bun run --cwd apps/playground tsc -b && bunx tsc --noEmit -p packages/zig-bridge/tsconfig.json",
+    "version-packages": "changeset version && bun install --lockfile-only"
   }
 }
