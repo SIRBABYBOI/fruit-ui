@@ -24,8 +24,10 @@ window.fruituiRecieve = (response) => {
     response === null ||
     !("id" in response) ||
     typeof response.id !== "number" ||
+    !Number.isSafeInteger(response.id) ||
+    response.id < 1 ||
+    (!("result" in response) && !("error" in response)) ||
     ("error" in response &&
-      response.error !== undefined &&
       typeof response.error !== "string")
   ) {
     return;

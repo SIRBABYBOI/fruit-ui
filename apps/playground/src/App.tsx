@@ -12,6 +12,11 @@ import {
 } from "@fruitui/react";
 
 import type { EditorTab } from "@fruitui/core";
+import { native } from "@fruitui/zig-bridge/webview";
+
+native.invoke("test", {}).catch((error) => {
+  console.log(error.message);
+});
 
 const initialTabs: EditorTab[] = [
   {

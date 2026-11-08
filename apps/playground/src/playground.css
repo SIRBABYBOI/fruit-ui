@@ -1,0 +1,12 @@
+@import "tailwindcss" source(none);
+
+@source "./App.tsx";
+
+@theme {
+  --color-fruit-bg: var(--fruit-bg);
+  --color-fruit-panel: var(--fruit-panel);
+  --color-fruit-border: var(--fruit-border);
+  --color-fruit-text: var(--fruit-text);
+  --color-fruit-muted: var(--fruit-muted);
+  --color-fruit-accent: var(--fruit-accent);
+}
