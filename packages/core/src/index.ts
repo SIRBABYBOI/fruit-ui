@@ -27,3 +27,5 @@ export interface FruitCommand {
   keybinding?: string;
   execute: FruitCommandHandler;
 }
+
+export type { FileTreeFile, FileTreeFolder, FileTreeNode } from "./file-tree";

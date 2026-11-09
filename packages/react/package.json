@@ -3,8 +3,14 @@
   "version": "0.1.0-alpha.2",
   "type": "module",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/SIRBABYBOI/fruit-ui.git", "directory": "packages/react" },
-  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SIRBABYBOI/fruit-ui.git",
+    "directory": "packages/react"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist"
   ],
@@ -27,6 +33,7 @@
   },
   "dependencies": {
     "@fruitui/core": "^0.1.0-alpha.2",
+    "@radix-ui/react-context-menu": "^2.4.1",
     "@radix-ui/react-slot": "^1.5.0",
     "@radix-ui/react-tooltip": "^1.4.1",
     "lucide-react": "^0.468.0",
