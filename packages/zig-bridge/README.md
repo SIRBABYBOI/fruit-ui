@@ -2,7 +2,7 @@
 
 The bridge connects JavaScript running in a WebView to a native host using request and response messages. Import `native` from `@fruitui/zig-bridge/webview` and call `await native.invoke(method, params)`; handle rejected promises for host errors, missing transport, and timeouts.
 
-Once published, install it with `npm install @fruitui/zig-bridge`.
+Install the alpha package with `npm install @fruitui/zig-bridge@alpha`.
 
 ## Host contract
 

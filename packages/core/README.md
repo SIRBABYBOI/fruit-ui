@@ -2,10 +2,10 @@
 
 Shared TypeScript types for FruitUI. This package currently contains types only.
 
-Once published, install it with:
+Install the alpha package with:
 
 ```sh
-npm install @fruitui/core
+npm install @fruitui/core@alpha
 ```
 
 ```ts

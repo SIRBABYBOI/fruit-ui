@@ -2,10 +2,10 @@
 
 React components for an editor-style workspace: `Workspace`, `ActivityBar`, `Sidebar`, `EditorArea`, and `StatusBar`.
 
-Once published, install the package with React 19 and React DOM 19:
+Install the alpha package with React 19 and React DOM 19:
 
 ```sh
-npm install @fruitui/react react react-dom
+npm install @fruitui/react@alpha react react-dom
 ```
 
 ```tsx
@@ -44,3 +44,63 @@ Pass `keybindings={[{ key: "Alt+b", command: "sidebar.toggle" }]}` to the provid
 For Alt/Option shortcuts, matching first uses the character reported by the keyboard; if it doesn't match, letter keys also fall back to their physical key code. This lets shortcuts such as Option+B work on macOS, where Option may produce a symbol instead of a letter.
 
 `WorkspaceLayout` accepts `defaultHorizontalLayout` and `defaultVerticalLayout` for the store's saved sizes and reports completed changes through its layout callbacks. When using the workspace store, avoid also supplying the layout's older `storageKey`, so there is one source of persistence. The playground demonstrates this setup, including editor groups and two shortcuts: Alt+B for the sidebar and Alt+J for the bottom panel.
+
+## Components
+
+All examples use `import { … } from "@fruitui/react"`. See `apps/playground/src/App.tsx` for a working workspace with resizing, an explorer, and editor splits.
+
+### Workspace and panels
+
+`Workspace` is the outer container. It accepts normal `div` props and children.
+
+`WorkspaceLayout` takes an `editor` node and optional `sidebar` and `secondarySidebar` nodes, plus a `bottomPanel` node. Pass `visibility` to control the optional panels, and listen to `onHorizontalLayoutChange` and `onVerticalLayoutChange` for completed resizes. `storageKey` saves sizes; alternatively, use the workspace store and `defaultHorizontalLayout` / `defaultVerticalLayout`.
+
+```tsx
+<Workspace>
+  <WorkspaceLayout
+    sidebar={<Sidebar title="Explorer">Files</Sidebar>}
+    editor={<div>Editor</div>}
+    bottomPanel={<div>Terminal</div>}
+  />
+  <StatusBar left="Ready" right="UTF-8" />
+</Workspace>
+```
+
+`Sidebar` accepts `title` and `children`. `StatusBar` accepts `left` and `right` content. `ActivityBar` takes `items` (`id`, `label`, `icon`), `activeId`, and `onActiveChange`.
+
+### File tree
+
+`FileTree` takes `nodes`, `expandedIds`, `onExpandedChange`, `selectedId`, and `onSelect`. Each node needs a unique ID. Folder nodes have a `children` array. The app owns the data and implements file operations; the component does not access a filesystem.
+
+```tsx
+<FileTree
+  nodes={nodes}
+  expandedIds={expandedIds}
+  onExpandedChange={setExpandedIds}
+  selectedId={selectedId}
+  onSelect={(node) => setSelectedId(node.id)}
+  onRename={(node) => console.log("Rename", node.id)}
+/>
+```
+
+Optional callbacks are `onCreateFile`, `onCreateFolder`, `onRename`, `onDelete`, and `onRefresh`. `renderIcon(node, expanded)` can override the default icons. Arrow keys navigate the tree, and Enter or Space opens a folder or selects a file.
+
+### Editors
+
+`EditorGroup` accepts `id`, `tabs`, `activeTabId`, `onActiveTabChange`, optional `onTabClose` and `onTabReorder`, `children` for active content, and `emptyState` for an empty group. Set a tab's `modified` field to show its dirty indicator. The app decides whether closing a dirty tab needs confirmation.
+
+```tsx
+<EditorGroup
+  id="main"
+  tabs={tabs}
+  activeTabId={activeTabId}
+  onActiveTabChange={setActiveTabId}
+  onTabClose={closeTab}
+  onTabReorder={setTabs}
+  emptyState={<p>Open a file to begin.</p>}
+>
+  <div>Editor content</div>
+</EditorGroup>
+```
+
+`EditorSplit` takes an `orientation` (`horizontal` or `vertical`) and a `groups` array of `{ id, content }`. Each group can contain an independent `EditorGroup`. `EditorArea` is the lower-level tab strip and content container used by `EditorGroup`; it takes the same tab and callback props. Tab reordering currently uses pointer drag-and-drop and does not support keyboard reordering or moving tabs between groups.

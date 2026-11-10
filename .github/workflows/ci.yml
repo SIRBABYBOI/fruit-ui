@@ -24,4 +24,5 @@ jobs:
       - run: bun run typecheck
       - run: bun test packages/zig-bridge
       - run: bun test packages/react/src/workspace
+      - run: bun test packages/react/tests
       - run: bun run build

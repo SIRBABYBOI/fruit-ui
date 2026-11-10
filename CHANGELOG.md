@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0-alpha.1 — Unreleased
+
+### Added
+
+- Resizable workspace panels with visibility controls and saved layouts.
+- A file tree with keyboard navigation, custom icons, and operation callbacks.
+- Editor groups, split layouts, and tab reordering.
+- Workspace state, commands, and configurable keyboard shortcuts.
+
+### Known limitations
+
+- File operations require an application-provided host.
+- Tab reordering uses pointer drag-and-drop; keyboard reordering is not available yet.
+- The Zig bridge has not yet been tested with a real Zig WebView host.
+
 ## 0.1.0-alpha.2 — Unreleased
 
 ### Added

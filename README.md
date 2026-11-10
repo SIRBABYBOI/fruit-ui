@@ -12,10 +12,10 @@ The project is in alpha. APIs and package contents may change.
 
 ## Getting started
 
-Once the packages are published, install the React package alongside React 19:
+Install the alpha React package alongside React 19:
 
 ```sh
-npm install @fruitui/react react react-dom
+npm install @fruitui/react@alpha react react-dom
 ```
 
 Import the stylesheet and components in your app:
