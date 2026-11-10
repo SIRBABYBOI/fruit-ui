@@ -27,6 +27,7 @@ jobs:
       - run: bun run build:packages
       - run: bun run typecheck
       - run: bun test packages/zig-bridge
+      - run: bun test packages/react/src/workspace
       - run: bun run build
       - name: Require alpha package versions
         run: |

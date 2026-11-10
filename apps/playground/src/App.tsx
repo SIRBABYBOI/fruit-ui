@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Files, Search, GitBranch, Settings } from "lucide-react";
 
 import {
@@ -10,8 +10,10 @@ import {
   EditorSplit,
   StatusBar,
   FileTree,
-  useWorkspaceVisibility,
-  useEditorGroups,
+  WorkspaceProvider,
+  useWorkspace,
+  useWorkspaceCommands,
+  defaultWorkspaceSnapshot,
 } from "@fruitui/react";
 
 import type { EditorTab, FileTreeNode } from "@fruitui/core";
@@ -156,7 +158,26 @@ function collectIds(node: FileTreeNode): string[] {
   return [node.id, ...node.children.flatMap(collectIds)];
 }
 
+const keybindings = [
+  { key: "Alt+b", command: "workspace.toggleSidebar" },
+  { key: "Alt+j", command: "workspace.toggleBottomPanel" },
+];
+
 export default function App() {
+  const initialState = defaultWorkspaceSnapshot();
+  initialState.groups[0] = {
+    id: "main",
+    tabs: initialTabs,
+    activeTabId: "src/main.zig",
+  };
+  return (
+    <WorkspaceProvider storageKey="fruitui-playground-workspace-v1" initialState={initialState} keybindings={keybindings}>
+      <Playground />
+    </WorkspaceProvider>
+  );
+}
+
+function Playground() {
   const [activity, setActivity] = useState("explorer");
 
   const {
@@ -171,29 +192,26 @@ export default function App() {
     reorderTabs,
     renameTabEverywhere,
     closeTabsEverywhere,
-  } = useEditorGroups({
-    groups: [
-      {
-        id: "main",
-        tabs: initialTabs,
-        activeTabId: "src/main.zig",
-      },
-    ],
-    activeGroupId: "main",
-  });
+    visibility,
+    togglePanel,
+    orientation: splitOrientation,
+    setOrientation,
+    horizontal,
+    vertical,
+    setPanelSizes,
+  } = useWorkspace((state) => state);
+  const commands = useWorkspaceCommands();
 
-  const [splitOrientation, setSplitOrientation] = useState<
-    "horizontal" | "vertical"
-  >("horizontal");
+  useEffect(() => {
+    const removeSidebar = commands.register("workspace.toggleSidebar", () => togglePanel("sidebar"));
+    const removeBottom = commands.register("workspace.toggleBottomPanel", () => togglePanel("bottomPanel"));
+    return () => { removeSidebar(); removeBottom(); };
+  }, [commands, togglePanel]);
 
   const [fileTree, setFileTree] = useState<FileTreeNode[]>(initialFileTree);
   const [expandedIds, setExpandedIds] = useState<string[]>(["src"]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(
     "src/main.zig",
-  );
-
-  const { visibility, togglePanel } = useWorkspaceVisibility(
-    "fruitui-playground-visibility",
   );
 
   function openFile(node: FileTreeNode) {
@@ -312,9 +330,7 @@ export default function App() {
         <button
           type="button"
           onClick={() => {
-            setSplitOrientation((current) =>
-              current === "horizontal" ? "vertical" : "horizontal",
-            );
+            setOrientation(splitOrientation === "horizontal" ? "vertical" : "horizontal");
           }}
           className="rounded px-2 py-1 hover:bg-white/10"
         >
@@ -357,13 +373,14 @@ export default function App() {
         />
 
         <WorkspaceLayout
-          storageKey="fruitui-playground-layout"
           visibility={visibility}
+          defaultHorizontalLayout={horizontal}
+          defaultVerticalLayout={vertical}
           onHorizontalLayoutChange={(layout) => {
-            console.log("Horizontal layout:", layout);
+            setPanelSizes("horizontal", layout);
           }}
           onVerticalLayoutChange={(layout) => {
-            console.log("Vertical layout:", layout);
+            setPanelSizes("vertical", layout);
           }}
           sidebar={
             <Sidebar title={activity}>

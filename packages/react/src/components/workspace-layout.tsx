@@ -32,6 +32,10 @@ export interface WorkspaceLayoutProps {
    */
   storageKey?: string;
 
+  /** Initial sizes keyed by panel ID, useful with a workspace store. */
+  defaultHorizontalLayout?: Layout | null;
+  defaultVerticalLayout?: Layout | null;
+
   /**
    * Called when the user finishes resizing the horizontal panels.
    * Values are percentages keyed by panel ID.
@@ -131,6 +135,8 @@ export function WorkspaceLayout({
   bottomPanel,
   visibility,
   storageKey,
+  defaultHorizontalLayout,
+  defaultVerticalLayout,
   onHorizontalLayoutChange,
   onVerticalLayoutChange,
 }: WorkspaceLayoutProps) {
@@ -151,6 +157,13 @@ export function WorkspaceLayout({
     ...(showBottomPanel ? ["bottom-panel"] : []),
   ];
 
+  // A saved layout for a different combination of visible panels cannot be
+  // applied to this group. Fall back to the panel defaults in that case.
+  const matchesPanels = (layout: Layout | null | undefined, ids: string[]) =>
+    layout && Object.keys(layout).length === ids.length && ids.every((id) => id in layout)
+      ? layout
+      : undefined;
+
   const horizontalLayout = useDefaultLayout({
     id: `${storageKey ?? "fruitui"}-horizontal`,
     panelIds: horizontalPanelIds,
@@ -169,7 +182,7 @@ export function WorkspaceLayout({
     <div className="min-h-0 min-w-0 flex-1">
       <Group
         orientation="horizontal"
-        defaultLayout={horizontalLayout.defaultLayout}
+        defaultLayout={matchesPanels(defaultHorizontalLayout, horizontalPanelIds) ?? horizontalLayout.defaultLayout}
         onLayoutChanged={(layout, meta) => {
           horizontalLayout.onLayoutChanged(layout, meta);
 
@@ -194,7 +207,7 @@ export function WorkspaceLayout({
         <Panel id="center" minSize="30%">
           <Group
             orientation="vertical"
-            defaultLayout={verticalLayout.defaultLayout}
+            defaultLayout={matchesPanels(defaultVerticalLayout, verticalPanelIds) ?? verticalLayout.defaultLayout}
             onLayoutChanged={(layout, meta) => {
               verticalLayout.onLayoutChanged(layout, meta);
 

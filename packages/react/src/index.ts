@@ -9,3 +9,6 @@ export * from "./components/file-tree";
 export * from "./components/editor-group";
 export * from "./components/editor-split";
 export * from "./components/use-editor-groups";
+export * from "./workspace/store";
+export * from "./workspace/commands";
+export * from "./workspace/context";
