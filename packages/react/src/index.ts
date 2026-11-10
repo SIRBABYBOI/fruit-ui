@@ -6,3 +6,6 @@ export * from "./components/status-bar";
 export * from "./components/workspace-layout";
 export * from "./components/use-workspace-visibility";
 export * from "./components/file-tree";
+export * from "./components/editor-group";
+export * from "./components/editor-split";
+export * from "./components/use-editor-groups";

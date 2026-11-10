@@ -1,3 +1,4 @@
+import { useId, useRef } from "react";
 import type { EditorTab } from "@fruitui/core";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
@@ -7,6 +8,7 @@ export interface EditorAreaProps {
   activeTabId: string | null;
   onActiveTabChange: (id: string) => void;
   onTabClose?: (id: string) => void;
+  onTabReorder?: (tabs: EditorTab[]) => void;
   children?: ReactNode;
 }
 
@@ -15,8 +17,38 @@ export function EditorArea({
   activeTabId,
   onActiveTabChange,
   onTabClose,
+  onTabReorder,
   children,
 }: EditorAreaProps) {
+  const groupId = useId();
+  const draggedTabId = useRef<string | null>(null);
+
+  function reorderTabs(targetId: string) {
+    const sourceId = draggedTabId.current;
+    draggedTabId.current = null;
+
+    if (!sourceId || sourceId === targetId || !onTabReorder) {
+      return;
+    }
+
+    const sourceIndex = tabs.findIndex((tab) => tab.id === sourceId);
+    const targetIndex = tabs.findIndex((tab) => tab.id === targetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    const reordered = [...tabs];
+    const [movedTab] = reordered.splice(sourceIndex, 1);
+
+    if (!movedTab) {
+      return;
+    }
+
+    reordered.splice(targetIndex, 0, movedTab);
+    onTabReorder(reordered);
+  }
+
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col bg-fruit-bg">
       <div
@@ -30,13 +62,32 @@ export function EditorArea({
           return (
             <div
               key={tab.id}
+              draggable={Boolean(onTabReorder)}
+              onDragStart={(event) => {
+                draggedTabId.current = tab.id;
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", tab.id);
+              }}
+              onDragOver={(event) => {
+                if (draggedTabId.current && onTabReorder) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                reorderTabs(tab.id);
+              }}
+              onDragEnd={() => {
+                draggedTabId.current = null;
+              }}
               className={`
                     flex shrink-0 items-center border-r border-fruit-border ${active ? "bg-fruit-bg text-fruit-text" : "text-fruit-muted"}`}
             >
               <button
                 type="button"
                 role="tab"
-                id={`fruit-tab-${tab.id}`}
+                id={`${groupId}-tab-${tab.id}`}
                 aria-selected={active}
                 onClick={() => onActiveTabChange(tab.id)}
                 className="flex h-full items-center gap-2 px-4 text-xs"

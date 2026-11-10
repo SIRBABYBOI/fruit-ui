@@ -6,10 +6,12 @@ import {
   WorkspaceLayout,
   ActivityBar,
   Sidebar,
-  EditorArea,
+  EditorGroup,
+  EditorSplit,
   StatusBar,
   FileTree,
   useWorkspaceVisibility,
+  useEditorGroups,
 } from "@fruitui/react";
 
 import type { EditorTab, FileTreeNode } from "@fruitui/core";
@@ -22,6 +24,7 @@ const initialTabs: EditorTab[] = [
   {
     id: "build.zig",
     title: "build.zig",
+    modified: true,
   },
 ];
 
@@ -155,8 +158,33 @@ function collectIds(node: FileTreeNode): string[] {
 
 export default function App() {
   const [activity, setActivity] = useState("explorer");
-  const [tabs, setTabs] = useState<EditorTab[]>(initialTabs);
-  const [activeTabId, setActiveTabId] = useState<string | null>("src/main.zig");
+
+  const {
+    groups,
+    activeGroupId,
+    setActiveGroup,
+    addGroup,
+    removeGroup,
+    openTab,
+    setActiveTab,
+    closeTab,
+    reorderTabs,
+    renameTabEverywhere,
+    closeTabsEverywhere,
+  } = useEditorGroups({
+    groups: [
+      {
+        id: "main",
+        tabs: initialTabs,
+        activeTabId: "src/main.zig",
+      },
+    ],
+    activeGroupId: "main",
+  });
+
+  const [splitOrientation, setSplitOrientation] = useState<
+    "horizontal" | "vertical"
+  >("horizontal");
 
   const [fileTree, setFileTree] = useState<FileTreeNode[]>(initialFileTree);
   const [expandedIds, setExpandedIds] = useState<string[]>(["src"]);
@@ -168,16 +196,6 @@ export default function App() {
     "fruitui-playground-visibility",
   );
 
-  function closeTab(id: string) {
-    const remaining = tabs.filter((tab) => tab.id !== id);
-
-    setTabs(remaining);
-
-    if (activeTabId === id) {
-      setActiveTabId(remaining[0]?.id ?? null);
-    }
-  }
-
   function openFile(node: FileTreeNode) {
     if (node.type !== "file") {
       return;
@@ -185,17 +203,10 @@ export default function App() {
 
     setSelectedFileId(node.id);
 
-    if (!tabs.some((tab) => tab.id === node.id)) {
-      setTabs((current) => [
-        ...current,
-        {
-          id: node.id,
-          title: node.name,
-        },
-      ]);
-    }
-
-    setActiveTabId(node.id);
+    openTab(activeGroupId, {
+      id: node.id,
+      title: node.name,
+    });
   }
 
   function createNode(folder: FileTreeNode, type: "file" | "folder") {
@@ -211,7 +222,7 @@ export default function App() {
       return;
     }
 
-    // Mock IDs are stable identifiers, not filesystem paths.
+    // These are mock identifiers, not filesystem paths.
     const id = crypto.randomUUID();
 
     const child: FileTreeNode =
@@ -235,13 +246,8 @@ export default function App() {
 
     setFileTree((current) => renameNode(current, node.id, name));
 
-    // Update an open tab if the renamed node is a file.
     if (node.type === "file") {
-      setTabs((current) =>
-        current.map((tab) =>
-          tab.id === node.id ? { ...tab, title: name } : tab,
-        ),
-      );
+      renameTabEverywhere(node.id, name);
     }
   }
 
@@ -254,24 +260,22 @@ export default function App() {
       return;
     }
 
-    const removedIds = new Set(collectIds(node));
-    const remainingTabs = tabs.filter((tab) => !removedIds.has(tab.id));
+    const removedIds = collectIds(node);
 
     setFileTree((current) => removeNode(current, node.id));
-    setExpandedIds((current) => current.filter((id) => !removedIds.has(id)));
-    setTabs(remainingTabs);
 
-    if (activeTabId && removedIds.has(activeTabId)) {
-      setActiveTabId(remainingTabs[0]?.id ?? null);
-    }
+    setExpandedIds((current) =>
+      current.filter((id) => !removedIds.includes(id)),
+    );
 
-    if (selectedFileId && removedIds.has(selectedFileId)) {
+    closeTabsEverywhere(removedIds);
+
+    if (selectedFileId && removedIds.includes(selectedFileId)) {
       setSelectedFileId(null);
     }
   }
 
   function refresh(node: FileTreeNode) {
-    // A real app could ask its host to reload this folder here.
     console.log("Refresh requested:", node);
   }
 
@@ -303,6 +307,45 @@ export default function App() {
           className="rounded px-2 py-1 hover:bg-white/10"
         >
           Toggle secondary sidebar
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSplitOrientation((current) =>
+              current === "horizontal" ? "vertical" : "horizontal",
+            );
+          }}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Change editor split
+        </button>
+
+        <button
+          type="button"
+          onClick={() => addGroup(crypto.randomUUID())}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Add editor group
+        </button>
+
+        <button
+          type="button"
+          disabled={groups.length <= 1}
+          onClick={() => {
+            const group = groups.find((item) => item.id === activeGroupId);
+
+            if (
+              group &&
+              (group.tabs.length === 0 ||
+                window.confirm("Close this editor group and its tabs?"))
+            ) {
+              removeGroup(group.id);
+            }
+          }}
+          className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-40"
+        >
+          Close active group
         </button>
       </div>
 
@@ -346,20 +389,48 @@ export default function App() {
             </Sidebar>
           }
           editor={
-            <EditorArea
-              tabs={tabs}
-              activeTabId={activeTabId}
-              onActiveTabChange={setActiveTabId}
-              onTabClose={closeTab}
-            >
-              {activeTabId ? (
-                <div className="p-6 font-mono text-sm">
-                  <span className="text-fruit-muted">
-                    // {tabs.find((tab) => tab.id === activeTabId)?.title}
-                  </span>
+            <EditorSplit
+              orientation={splitOrientation}
+              groups={groups.map((group) => ({
+                id: group.id,
+                content: (
+                  <div
+                    className="h-full min-h-0"
+                    onPointerDownCapture={() => setActiveGroup(group.id)}
+                    onFocusCapture={() => setActiveGroup(group.id)}
+                  >
+                    <EditorGroup
+                      id={group.id}
+                      tabs={group.tabs}
+                      activeTabId={group.activeTabId}
+                      onActiveTabChange={(tabId) => {
+                        setActiveTab(group.id, tabId);
+                      }}
+                      onTabClose={(tabId) => {
+                        closeTab(group.id, tabId);
+                      }}
+                      onTabReorder={(tabs) => {
+                        reorderTabs(group.id, tabs);
+                      }}
+                      emptyState={
+                        <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-fruit-muted">
+                          <p>No editor open</p>
+                          <p>Select a file from the explorer to get started.</p>
+                        </div>
+                      }
+                    >
+                      <div className="p-6 font-mono text-sm">
+                        <span className="text-fruit-muted">
+                          //{" "}
+                          {
+                            group.tabs.find(
+                              (tab) => tab.id === group.activeTabId,
+                            )?.title
+                          }
+                        </span>
 
-                  <pre className="mt-4 text-fruit-text">
-                    {`const std = @import("std");
+                        <pre className="mt-4 text-fruit-text">
+                          {`const std = @import("std");
 
 pub fn main() void {
     std.debug.print(
@@ -367,14 +438,13 @@ pub fn main() void {
         .{},
     );
 }`}
-                  </pre>
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-fruit-muted">
-                  No editor open
-                </div>
-              )}
-            </EditorArea>
+                        </pre>
+                      </div>
+                    </EditorGroup>
+                  </div>
+                ),
+              }))}
+            />
           }
           bottomPanel={
             <div className="h-full bg-fruit-panel p-3 text-xs">
