@@ -12,3 +12,4 @@ export * from "./components/use-editor-groups";
 export * from "./workspace/store";
 export * from "./workspace/commands";
 export * from "./workspace/context";
+export * from "./components/code-editor";

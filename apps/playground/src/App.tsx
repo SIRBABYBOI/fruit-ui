@@ -10,6 +10,7 @@ import {
   EditorSplit,
   StatusBar,
   FileTree,
+  CodeEditor,
   WorkspaceProvider,
   useWorkspace,
   useWorkspaceCommands,
@@ -90,6 +91,11 @@ const activities = [
   },
 ];
 
+const keybindings = [
+  { key: "Alt+b", command: "workspace.toggleSidebar" },
+  { key: "Alt+j", command: "workspace.toggleBottomPanel" },
+];
+
 function addChild(
   nodes: FileTreeNode[],
   folderId: string,
@@ -158,20 +164,21 @@ function collectIds(node: FileTreeNode): string[] {
   return [node.id, ...node.children.flatMap(collectIds)];
 }
 
-const keybindings = [
-  { key: "Alt+b", command: "workspace.toggleSidebar" },
-  { key: "Alt+j", command: "workspace.toggleBottomPanel" },
-];
-
 export default function App() {
   const initialState = defaultWorkspaceSnapshot();
+
   initialState.groups[0] = {
     id: "main",
     tabs: initialTabs,
     activeTabId: "src/main.zig",
   };
+
   return (
-    <WorkspaceProvider storageKey="fruitui-playground-workspace-v1" initialState={initialState} keybindings={keybindings}>
+    <WorkspaceProvider
+      storageKey="fruitui-playground-workspace-v1"
+      initialState={initialState}
+      keybindings={keybindings}
+    >
       <Playground />
     </WorkspaceProvider>
   );
@@ -179,6 +186,19 @@ export default function App() {
 
 function Playground() {
   const [activity, setActivity] = useState("explorer");
+
+  const [editorValue, setEditorValue] = useState(
+    "const message = 'Hello, FruitUI!';",
+  );
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
+  const [editorLineNumbers, setEditorLineNumbers] = useState(true);
+  const [editorLineWrapping, setEditorLineWrapping] = useState(false);
+
+  const [fileTree, setFileTree] = useState<FileTreeNode[]>(initialFileTree);
+  const [expandedIds, setExpandedIds] = useState<string[]>(["src"]);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(
+    "src/main.zig",
+  );
 
   const {
     groups,
@@ -200,19 +220,23 @@ function Playground() {
     vertical,
     setPanelSizes,
   } = useWorkspace((state) => state);
+
   const commands = useWorkspaceCommands();
 
   useEffect(() => {
-    const removeSidebar = commands.register("workspace.toggleSidebar", () => togglePanel("sidebar"));
-    const removeBottom = commands.register("workspace.toggleBottomPanel", () => togglePanel("bottomPanel"));
-    return () => { removeSidebar(); removeBottom(); };
-  }, [commands, togglePanel]);
+    const removeSidebar = commands.register("workspace.toggleSidebar", () =>
+      togglePanel("sidebar"),
+    );
 
-  const [fileTree, setFileTree] = useState<FileTreeNode[]>(initialFileTree);
-  const [expandedIds, setExpandedIds] = useState<string[]>(["src"]);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(
-    "src/main.zig",
-  );
+    const removeBottom = commands.register("workspace.toggleBottomPanel", () =>
+      togglePanel("bottomPanel"),
+    );
+
+    return () => {
+      removeSidebar();
+      removeBottom();
+    };
+  }, [commands, togglePanel]);
 
   function openFile(node: FileTreeNode) {
     if (node.type !== "file") {
@@ -299,7 +323,7 @@ function Playground() {
 
   return (
     <Workspace>
-      <div className="flex shrink-0 items-center gap-2 border-b border-fruit-border bg-fruit-panel p-2 text-xs">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-fruit-border bg-fruit-panel p-2 text-xs">
         <button
           type="button"
           aria-pressed={visibility.sidebar}
@@ -330,7 +354,9 @@ function Playground() {
         <button
           type="button"
           onClick={() => {
-            setOrientation(splitOrientation === "horizontal" ? "vertical" : "horizontal");
+            setOrientation(
+              splitOrientation === "horizontal" ? "vertical" : "horizontal",
+            );
           }}
           className="rounded px-2 py-1 hover:bg-white/10"
         >
@@ -362,6 +388,41 @@ function Playground() {
           className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-40"
         >
           Close active group
+        </button>
+
+        <button
+          type="button"
+          aria-pressed={editorReadOnly}
+          onClick={() => setEditorReadOnly((current) => !current)}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Toggle read-only
+        </button>
+
+        <button
+          type="button"
+          aria-pressed={editorLineNumbers}
+          onClick={() => setEditorLineNumbers((current) => !current)}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Toggle line numbers
+        </button>
+
+        <button
+          type="button"
+          aria-pressed={editorLineWrapping}
+          onClick={() => setEditorLineWrapping((current) => !current)}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Toggle line wrapping
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEditorValue("Updated from React")}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Replace document
         </button>
       </div>
 
@@ -436,27 +497,14 @@ function Playground() {
                         </div>
                       }
                     >
-                      <div className="p-6 font-mono text-sm">
-                        <span className="text-fruit-muted">
-                          //{" "}
-                          {
-                            group.tabs.find(
-                              (tab) => tab.id === group.activeTabId,
-                            )?.title
-                          }
-                        </span>
-
-                        <pre className="mt-4 text-fruit-text">
-                          {`const std = @import("std");
-
-pub fn main() void {
-    std.debug.print(
-        "Hello from FruitUI!\\n",
-        .{},
-    );
-}`}
-                        </pre>
-                      </div>
+                      <CodeEditor
+                        value={editorValue}
+                        onChange={setEditorValue}
+                        readOnly={editorReadOnly}
+                        lineNumbers={editorLineNumbers}
+                        lineWrapping={editorLineWrapping}
+                        tabSize={2}
+                      />
                     </EditorGroup>
                   </div>
                 ),
