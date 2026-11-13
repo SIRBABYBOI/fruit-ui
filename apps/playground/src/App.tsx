@@ -185,6 +185,8 @@ export default function App() {
 }
 
 function Playground() {
+  const [editorTheme, setEditorTheme] = useState<"dark" | "light">("dark");
+
   const [activity, setActivity] = useState("explorer");
 
   const [editorValue, setEditorValue] = useState(
@@ -424,6 +426,18 @@ function Playground() {
         >
           Replace document
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEditorTheme((current) =>
+              current === "dark" ? "light" : "dark",
+            );
+          }}
+          className="rounded px-2 py-1 hover:bg-white/10"
+        >
+          Toggle editor theme
+        </button>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -504,6 +518,11 @@ function Playground() {
                         lineNumbers={editorLineNumbers}
                         lineWrapping={editorLineWrapping}
                         tabSize={2}
+                        filename={
+                          group.tabs.find((tab) => tab.id === group.activeTabId)
+                            ?.title
+                        }
+                        theme={editorTheme}
                       />
                     </EditorGroup>
                   </div>

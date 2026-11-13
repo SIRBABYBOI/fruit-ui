@@ -13,3 +13,4 @@ export * from "./workspace/store";
 export * from "./workspace/commands";
 export * from "./workspace/context";
 export * from "./components/code-editor";
+export * from "./components/editor-languages";

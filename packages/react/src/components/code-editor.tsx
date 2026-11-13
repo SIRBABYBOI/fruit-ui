@@ -10,8 +10,19 @@ import {
   keymap,
   lineNumbers as lineNumbersExtension,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { indentUnit } from "@codemirror/language";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  defaultHighlightStyle,
+  indentUnit,
+  syntaxHighlighting,
+} from "@codemirror/language";
+import {
+  detectEditorLanguage,
+  getEditorLanguageExtension,
+} from "./editor-languages";
+import type { EditorLanguageExtensions } from "./editor-languages";
+import { createEditorTheme } from "./editor-theme";
+import type { EditorTheme } from "./editor-theme";
 
 /**
  * Marks changes made from the value prop so they don't call onChange.
@@ -45,6 +56,26 @@ export interface CodeEditorProps {
   indentWithTabs?: boolean;
 
   className?: string;
+
+  /**
+   * Used to detect a language when language isn't provided.
+   */
+  filename?: string;
+
+  /**
+   * Explicit language name. Overrides filename detection.
+   */
+  language?: string;
+
+  /**
+   * Add or override language extensions by name.
+   */
+  customLanguages?: EditorLanguageExtensions;
+
+  /**
+   * Editor colors. Defaults to dark.
+   */
+  theme?: EditorTheme;
 }
 
 export function CodeEditor({
@@ -56,6 +87,10 @@ export function CodeEditor({
   tabSize = 2,
   indentWithTabs = false,
   className,
+  filename,
+  language,
+  customLanguages,
+  theme = "dark",
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -65,6 +100,18 @@ export function CodeEditor({
 
   if (configurationRef.current === null) {
     configurationRef.current = new Compartment();
+  }
+
+  const languageRef = useRef<Compartment | null>(null);
+
+  if (languageRef.current === null) {
+    languageRef.current = new Compartment();
+  }
+
+  const themeRef = useRef<Compartment | null>(null);
+
+  if (themeRef.current === null) {
+    themeRef.current = new Compartment();
   }
 
   const onChangeRef = useRef(onChange);
@@ -112,8 +159,15 @@ export function CodeEditor({
   useEffect(() => {
     const parent = containerRef.current;
     const configuration = configurationRef.current;
+    const languageConfiguration = languageRef.current;
+    const themeConfiguration = themeRef.current;
 
-    if (!parent || !configuration) {
+    if (
+      !parent ||
+      !configuration ||
+      !languageConfiguration ||
+      !themeConfiguration
+    ) {
       return;
     }
 
@@ -123,8 +177,11 @@ export function CodeEditor({
       doc: initial.value,
       extensions: [
         history(),
+        themeConfiguration.of([]),
+        languageConfiguration.of([]),
 
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        // Escape followed by Tab temporarily restores normal focus navigation.
+        keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
 
         configuration.of(createConfiguration(initial)),
 
@@ -153,6 +210,36 @@ export function CodeEditor({
       view.destroy();
     };
   }, []);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    const themeConfiguration = themeRef.current;
+
+    if (!view || !themeConfiguration) {
+      return;
+    }
+
+    view.dispatch({
+      effects: themeConfiguration.reconfigure(createEditorTheme(theme)),
+    });
+  }, [theme]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    const languageConfiguration = languageRef.current;
+
+    if (!view || !languageConfiguration) {
+      return;
+    }
+
+    const selectedLanguage = language ?? detectEditorLanguage(filename);
+
+    view.dispatch({
+      effects: languageConfiguration.reconfigure(
+        getEditorLanguageExtension(selectedLanguage, customLanguages),
+      ),
+    });
+  }, [filename, language, customLanguages]);
 
   // Apply configuration changes without destroying the editor.
   useEffect(() => {
